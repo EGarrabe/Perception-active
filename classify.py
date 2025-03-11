@@ -1,8 +1,8 @@
 from classify_functions import *
 
 def main():
-    image_folder = "dataset_vlm_mini"
-    user_choice_file = "user_choice_mini.csv"
+    image_folder = "dataset_vlm"
+    user_choice_file = "user_choice.csv"
     csv_file = "results.csv"
 
     # Uncomment the models to use.
