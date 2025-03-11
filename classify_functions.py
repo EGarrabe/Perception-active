@@ -170,6 +170,7 @@ def plot_results(categories, image_folder, csv_file):
     
     model_names = []
     model_indices = {}
+    model_time_indices = {}
     
     for i in range(3, len(header), 3):
         if i < len(header):
@@ -177,12 +178,14 @@ def plot_results(categories, image_folder, csv_file):
             if not model_name.endswith("Response") and not model_name.endswith("Time (s)"):
                 model_names.append(model_name)
                 model_indices[model_name] = i
+                model_time_indices[model_name] = i + 2
     
     image_list = []
     csv_rows = {}
     user_choice_list = []
     classification_data = {model: [] for model in model_names}
     error_data = {model: 0 for model in model_names}
+    time_data = {model: [] for model in model_names}
 
     # data: image name, description, user choice, model1 classification, model1 response, model1 time, model2 classification, model2 response, model2 time, ...
     
@@ -201,14 +204,26 @@ def plot_results(categories, image_folder, csv_file):
         # Extract model classifications
         for model_name in model_names:
             idx = model_indices[model_name]
+            time_idx = model_time_indices[model_name]
+
             if idx < len(row):
                 model_classif = row[idx]
                 classification_data[model_name].append((image_name, model_classif))
                 error = 1 if model_classif != user_choice else 0
                 error_data[model_name] += error
+
+                if time_idx < len(row) and row[time_idx]:
+                    try:
+                        time_data[model_name].append(float(row[time_idx]))
+                    except ValueError:
+                        pass
+    
+    avg_time_data = {model: sum(times) / len(times) if len(times) > 0 else 0 for model, times in time_data.items()}
+
     
     # Plot
-    fig, ax = plt.subplots(figsize=(20, 10))
+    # fig, ax = plt.subplots(figsize=(20, 10))
+    fig, ax = plt.subplots(figsize=(14, 7))
     colors = list(mcolors.TABLEAU_COLORS.values()) + list(mcolors.CSS4_COLORS.values())
     logistic_mult = 2 / (1 + np.exp(-(len(model_names) - 1)))
     offset_step = ((1/len(categories)) * logistic_mult) / len(model_names)
@@ -245,11 +260,12 @@ def plot_results(categories, image_folder, csv_file):
     ax.set_title(f'Model Classification Results with User Choice Comparison ({image_folder})')
     ax.legend(loc='upper right', framealpha=0.5)
 
-    # total error for each model
+    # total error & avg time for each model
     error_text = "Total Errors: " + " | ".join([f"{model}: {err}" for model, err in error_data.items()])
-    plt.figtext(0.5, 0.01, error_text, wrap=True, horizontalalignment='center', fontsize=12, bbox={"facecolor": "lightgray", "alpha": 0.5, "pad": 5})
+    time_text = "Average Generation Time (s): " + " | ".join([f"{model}: {round(time, 2)}" for model, time in avg_time_data.items()])
+    plt.figtext(0.5, 0.01, f"{error_text}\n{time_text}", wrap=True, horizontalalignment='center', fontsize=12, bbox={"facecolor": "lightgray", "alpha": 0.5, "pad": 5})
 
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95]) # (adjust to fit error text)
+    plt.tight_layout(rect=[0, 0.07, 1, 1]) # (adjust to fit text)
     plt.savefig('classification_plot.png')
     plt.show()
 

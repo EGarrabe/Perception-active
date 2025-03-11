@@ -1,6 +1,7 @@
 dataset_vlm
 dataset_vlm_mini
 dataset_vlm_short
+dataset_table
 res
 classification_plot.png
 user_choice_mini.csv
