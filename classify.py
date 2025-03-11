@@ -20,11 +20,11 @@ def main():
     input_prompt = "You are a robot. Based on what you see, you must identify the object. You might see your robotic arm, but ignore it, focus on the object. After this: if the object should go in the personal items box (number 1), the electronics and tools box (number 2), or if the object is trash and should be thrown in the trash can (number 3). Be concise, identify the object, and you must categorize it in one of the three categories at all costs. Do not mention what it is not, only what it is and its category."
 
 
-    # user_choice_data = read_user_choices(user_choice_file)
-    # image_list = load_images(image_folder)
-    # csv_rows, description, user_choice = init_csv(image_list, user_choice_data)
-    # csv_rows = process_images(image_list, models, user_choice_data, input_prompt, image_folder, csv_rows, user_choice, description)
-    # save_csv(csv_file, csv_rows, image_list, models)
+    user_choice_data = read_user_choices(user_choice_file)
+    image_list = load_images(image_folder)
+    csv_rows, description, user_choice = init_csv(image_list, user_choice_data)
+    csv_rows = process_images(image_list, models, user_choice_data, input_prompt, image_folder, csv_rows, user_choice, description)
+    save_csv(csv_file, csv_rows, image_list, models)
 
     categories = ["Personal Items", "Tools/Electronics", "Trash", "Unclear/Nothing"]
     plot_results(categories, image_folder, csv_file)
