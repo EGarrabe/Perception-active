@@ -78,7 +78,7 @@ def classify_response(response):
             classif_counts["1"] += 1
         if word in ["2", "tools", "electronics"]:
             classif_counts["2"] += 1
-        if word in ["3", "trash", "rubbish", "dispos", "throw"] and "not trash" not in response:
+        if word in ["3", "trash", "rubbish", "dispos", "throw", "thrown"] and "not trash" not in response:
             classif_counts["3"] += 1
 
     max_classes = [k for k, v in classif_counts.items() if v == max(classif_counts.values())]
@@ -92,7 +92,7 @@ def print_response(model_name, image_name, classif, model_response, time_taken, 
     """
     classif_color = f"\033[92m{classif}\033[37m" if classif == user_choice else f"\033[91m{classif}\033[37m"
     colored_response = model_response
-    for word in ["1", "personal", "2", "tools", "electronics", "3", "trash", "rubbish", "dispos", "throw"]:
+    for word in ["1", "personal", "2", "tools", "electronics", "3", "trash", "rubbish", "dispos", "throw", "thrown"]:
         if word == "trash":
             colored_response = re.sub(rf'\b(?<!not\s){word}\b', f"\033[1;33m{word}\033[0m", colored_response)
         else:
