@@ -67,69 +67,87 @@ def single_call(model_name, input_prompt, image_path, input_temperature):
     return model_response, time_taken
 
 
-def classify_response(response):
+def classify_response(response, categories):
     """
-    Classify the response into one of 4 classes by counting the occurences of specific words
+    Classify the response into one of the classes by counting the occurences of specific words
     """
-    classif_counts = {"1": 0, "2": 0, "3": 0, "4": 0}
+    classif_counts = {cat: 0 for cat in categories}
     for word in response.split():
         word = word.strip(string.punctuation).lower()
-        if word in ["1", "personal"]:
-            classif_counts["1"] += 1
-        if word in ["2", "tools", "electronics"]:
-            classif_counts["2"] += 1
-        if word in ["3", "trash", "rubbish", "dispos", "throw", "thrown"] and "not trash" not in response:
-            classif_counts["3"] += 1
-
+        for cat, words in categories.items():
+            if word in words:
+                classif_counts[cat] += 1
     max_classes = [k for k, v in classif_counts.items() if v == max(classif_counts.values())]
-    classif = max_classes[0] if len(max_classes) == 1 else "4"
+    classif = max_classes[0] if len(max_classes) == 1 else "Unclear/Nothing"
     return classif
 
 
-def print_response(model_name, image_name, classif, model_response, time_taken, user_choice, i, description, image_count):
+
+
+def print_response(model_name, image_name, classif, model_response, time_taken, user_choice, i, description, image_count, categories):
     """
     Prints the log of the response with color coding
     """
     classif_color = f"\033[92m{classif}\033[37m" if classif == user_choice else f"\033[91m{classif}\033[37m"
     colored_response = model_response
-    for word in ["1", "personal", "2", "tools", "electronics", "3", "trash", "rubbish", "dispos", "throw", "thrown"]:
-        if word == "trash":
-            colored_response = re.sub(rf'\b(?<!not\s){word}\b', f"\033[1;33m{word}\033[0m", colored_response)
-        else:
+    for cat, words in categories.items():
+        for word in words:
             colored_response = re.sub(rf'\b{word}\b', f"\033[1;33m{word}\033[0m", colored_response)
 
     print(f"\n\033[1;34m[{model_name}] \033[37m[{i+1}/{image_count}] {image_name} : Class {classif_color} ({user_choice}) ({time_taken:.2f}s) ({description})\033[0m")
     print(colored_response)
 
 
-def process_images(image_list, models, user_choice_data, input_prompt, image_folder, csv_rows, user_choice, description):
+def process_images(image_list, models, user_choice_data, input_prompt, image_folder, csv_rows, user_choice, description, categories):
     """
     Main loop to process images with models
     Returns classification data and error data
+    
+    Converts numeric user choices to category names for proper comparison
     """
+    # Get a mapping of numeric choices to category names (if needed)
+    category_names = list(categories.keys())
+    
     classification_data = {model['name']: [] for model in models}
     error_data = {model['name']: 0 for model in models} # error tracking
+    
     for model in models:
         model_name = model['name']
-
         print(f"\n=== Processing with Model: {model_name} ===")
 
         for i, image_name in enumerate(image_list):
+            # Get the image path and call the model
             model_response, time_taken = single_call(model_name, input_prompt, os.path.join(image_folder, image_name), model['temperature'])
 
-            classif = classify_response(model_response.lower())
+            # Classify the response
+            classif = classify_response(model_response.lower(), categories)
             classification_data[model_name].append((image_name, classif)) # for plot
 
-            # errors
-            user_choice = user_choice_data.get(image_name, {}).get("user_choice", "4")
+            # Get user choice (might be numeric or string)
+            user_choice_raw = user_choice_data.get(image_name, {}).get("user_choice", "Unclear/Nothing")
             description = user_choice_data.get(image_name, {}).get("description", "N/A")
+            
+            # Convert numeric user choice to category name if necessary
+            if user_choice_raw.isdigit() and int(user_choice_raw) <= len(category_names):
+                idx = int(user_choice_raw) - 1  # Convert from 1-based to 0-based index
+                if 0 <= idx < len(category_names):
+                    user_choice = category_names[idx]
+                else:
+                    user_choice = "Unclear/Nothing"
+            else:
+                # If already a category name or invalid, use as is
+                user_choice = user_choice_raw
+            
+            # Calculate error (1 if mismatch, 0 if match)
             error = 1 if classif != user_choice else 0
             error_data[model_name] += error
 
-            print_response(model_name, image_name, classif, model_response, time_taken, user_choice, i, description, len(image_list))
+            # Print response with color coding
+            print_response(model_name, image_name, classif, model_response, time_taken, user_choice, i, description, len(image_list), categories)
 
-            if len(csv_rows[image_name]) == 3: # (image_name, description, user_choice)
-                for _ in range(len(models) * 3): # space for model data
+            # Update CSV rows
+            if len(csv_rows[image_name]) == 3:  # (image_name, description, user_choice)
+                for _ in range(len(models) * 3):  # space for model data
                     csv_rows[image_name].append("")
             
             model_idx = models.index(model)
@@ -156,22 +174,19 @@ def save_csv(csv_file, csv_rows, image_list, models):
         for image_name in image_list:
             writer.writerow(csv_rows[image_name])
 
-
-def plot_results(categories, image_folder, csv_file):
+def load_csv(csv_file, categories):
     """
-    Plot the classification results with user choice comparison
-    Data is read directly from the CSV file
+    Load the classification data from a CSV file
     """
-    # Read data from CSV file
     with open(csv_file, mode='r', newline='') as file:
         reader = csv.reader(file)
         header = next(reader)
         rows = list(reader)
     
+    category_names = list(categories.keys())
     model_names = []
-    model_indices = {}
-    model_time_indices = {}
-    
+    model_indices, model_time_indices = {}, {}
+
     for i in range(3, len(header), 3):
         if i < len(header):
             model_name = header[i]
@@ -179,7 +194,7 @@ def plot_results(categories, image_folder, csv_file):
                 model_names.append(model_name)
                 model_indices[model_name] = i
                 model_time_indices[model_name] = i + 2
-    
+
     image_list = []
     csv_rows = {}
     user_choice_list = []
@@ -187,27 +202,42 @@ def plot_results(categories, image_folder, csv_file):
     error_data = {model: 0 for model in model_names}
     time_data = {model: [] for model in model_names}
 
-    # data: image name, description, user choice, model1 classification, model1 response, model1 time, model2 classification, model2 response, model2 time, ...
-    
     for row in rows:
         if len(row) < 3:
-            continue # incomplete: skip
-            
+            continue
         image_name = row[0]
         description = row[1]
-        user_choice = row[2]
-        
+        user_choice_raw = row[2]
+
+        if user_choice_raw.isdigit() and int(user_choice_raw) <= len(category_names):
+            idx = int(user_choice_raw) - 1
+            if 0 <= idx < len(category_names):
+                user_choice = category_names[idx]
+            else:
+                user_choice = "Unclear/Nothing"
+        else:
+            user_choice = user_choice_raw
+
         image_list.append(image_name)
         csv_rows[image_name] = row
         user_choice_list.append((image_name, user_choice))
-        
-        # Extract model classifications
+
         for model_name in model_names:
             idx = model_indices[model_name]
             time_idx = model_time_indices[model_name]
 
             if idx < len(row):
-                model_classif = row[idx]
+                model_classif_raw = row[idx]
+
+                if model_classif_raw.isdigit() and int(model_classif_raw) <= len(category_names):
+                    model_idx = int(model_classif_raw) - 1
+                    if 0 <= model_idx < len(category_names):
+                        model_classif = category_names[model_idx]
+                    else:
+                        model_classif = model_classif_raw
+                else:
+                    model_classif = model_classif_raw
+
                 classification_data[model_name].append((image_name, model_classif))
                 error = 1 if model_classif != user_choice else 0
                 error_data[model_name] += error
@@ -217,20 +247,33 @@ def plot_results(categories, image_folder, csv_file):
                         time_data[model_name].append(float(row[time_idx]))
                     except ValueError:
                         pass
-    
-    avg_time_data = {model: sum(times) / len(times) if len(times) > 0 else 0 for model, times in time_data.items()}
 
-    
+    avg_time_data = {model: sum(times) / len(times) if len(times) > 0 else 0 for model, times in time_data.items()}
+    return image_list, csv_rows, user_choice_list, classification_data, error_data, avg_time_data, category_names, model_names
+
+def plot_results(categories, image_folder, csv_file, output_plot):
+    """
+    Plot the classification results with user choice comparison
+    """
+    image_list, csv_rows, user_choice_list, classification_data, error_data, avg_time_data, category_names, model_names = load_csv(csv_file, categories)
+
     # Plot
-    # fig, ax = plt.subplots(figsize=(20, 10))
     fig, ax = plt.subplots(figsize=(14, 7))
     colors = list(mcolors.TABLEAU_COLORS.values()) + list(mcolors.CSS4_COLORS.values())
     logistic_mult = 2 / (1 + np.exp(-(len(model_names) - 1)))
-    offset_step = ((1/len(categories)) * logistic_mult) / len(model_names)
+    offset_step = ((1/len(category_names)) * logistic_mult) / len(model_names)
 
     # user choice
     x_uc = list(range(len(user_choice_list)))
-    y_uc = [categories.index("Personal Items") if uc == "1" else categories.index("Tools/Electronics") if uc == "2" else categories.index("Trash") if uc == "3" else categories.index("Unclear/Nothing") for _, uc in user_choice_list]
+    
+    y_uc = []
+    for _, uc in user_choice_list:
+        if uc in category_names:
+            y_uc.append(category_names.index(uc))
+        else:
+            # If not found, append the last category (usually "Unclear/Nothing")
+            y_uc.append(len(category_names) - 1)
+    
     ax.scatter(x_uc, y_uc, label="User Choice", color="black", marker='x', s=100, linewidths=2)
 
     # model classifications
@@ -238,23 +281,26 @@ def plot_results(categories, image_folder, csv_file):
         x = []
         y = []
         for i, (image, classif) in enumerate(data):
-            if classif in ["1", "2", "3", "4"]:
-                y_value = categories[int(classif) - 1]
+            if classif in category_names:
+                y_value = classif
                 x.append(i)
-                y.append(categories.index(y_value) + (idx + 1) * offset_step)
+                y.append(category_names.index(y_value) + (idx + 1) * offset_step)
+            else:
+                # Skip invalid classifications
+                continue
 
         ax.scatter(x, y, label=model_name, color=colors[idx % len(colors)], marker='o', alpha=0.8, s=100)
 
     # horizontal lines
-    for i in range(len(categories)):
+    for i in range(len(category_names)):
         ax.axhline(y=i, color='gray', linestyle='--', linewidth=0.5)
 
     # labels and Title
     x_labels = [f"{csv_rows[image][1]} ({i+1})" for i, image in enumerate(image_list)]
     ax.set_xticks(range(len(image_list)))
     ax.set_xticklabels(x_labels, rotation=30, ha='right')
-    ax.set_yticks(range(len(categories)))
-    ax.set_yticklabels(categories)
+    ax.set_yticks(range(len(category_names)))
+    ax.set_yticklabels(category_names)
     ax.set_xlabel('Image Index and Description')
     ax.set_ylabel('Classification Category')
     ax.set_title(f'Model Classification Results with User Choice Comparison ({image_folder})')
@@ -266,6 +312,5 @@ def plot_results(categories, image_folder, csv_file):
     plt.figtext(0.5, 0.01, f"{error_text}\n{time_text}", wrap=True, horizontalalignment='center', fontsize=12, bbox={"facecolor": "lightgray", "alpha": 0.5, "pad": 5})
 
     plt.tight_layout(rect=[0, 0.07, 1, 1]) # (adjust to fit text)
-    plt.savefig('classification_plot.png')
+    plt.savefig(output_plot)
     plt.show()
-
