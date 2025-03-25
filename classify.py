@@ -22,13 +22,19 @@ def main():
 
     # input_prompt = "I am a robot carrying out the following task: 'Clear out the desk by putting the items in the blue containers. The personal items should go in box number 1, the tools in box number 2 and rubbish in the trash can.'. This is what I see. Please suggest a first pick-and-place action to begin the task. Be concise, only output the action. If the task is accomplished, answer 'Do nothing'."
     # input_prompt = "You are a robot. Based on what you see, you must identify the object. You might see your robotic arm, but ignore it, focus on the object. After this: if the object should go in the personal items box (number 1), the electronics and tools box (number 2), or if the object is trash and should be thrown in the trash can (number 3). Be concise, only output the action."
-    # input_prompt = "You are a robot. Based on what you see, you must identify the object. You might see your robotic arm, but ignore it, focus on the object. After this: if the object should go in the personal items box (number 1), the electronics and tools box (number 2), or if the object is trash and should be thrown in the trash can (number 3). Be concise, identify the object, and you must categorize it in one of the three categories at all costs. Do not mention what it is not, only what it is and its category."
-    input_prompt = "You are a robot. Based on what you see, you must identify the object. You might see your robotic arm, but ignore it, focus on the object. After this: determine if the object should go in the household & misc box (number 1) or the electronics and tools box (number 2). Be concise, identify the object, and you must categorize it in one of the two categories. Do not mention what it is not."
+    input_prompt = "You are a robot. Based on what you see, you must identify the object. You might see your robotic arm, but ignore it, focus on the object. After this: if the object should go in the personal items box (number 1), the electronics and tools box (number 2), or if the object is trash and should be thrown in the trash can (number 3). Be concise, identify the object, and you must categorize it in one of the three categories at all costs. Do not mention what it is not, only what it is and its category."
+    # input_prompt = "You are a robot. Based on what you see, you must identify the object. You might see your robotic arm, but ignore it, focus on the object. After this: determine if the object should go in the household & misc box (number 1) or the electronics and tools box (number 2). Be concise, identify the object, and you must categorize it in one of the two categories. Do not mention what it is not."
 
+    # categories = {
+    #     "Household & Misc": ["1", "household", "misc"],
+    #     "Tools/Electronics": ["2", "tools", "electronics"],
+    #     "Unclear/Nothing": ["3", "unclear", "unsure"]
+    # }
     categories = {
-        "Household & Misc": ["1", "household", "misc"],
+        "Personal Items": ["1", "personal"],
         "Tools/Electronics": ["2", "tools", "electronics"],
-        "Unclear/Nothing": ["3", "unclear", "unsure"]
+        "Trash": ["3", "trash", "rubbish", "dispos", "throw", "thrown"],
+        "Unclear/Nothing": ["4", "unclear"]
     }
     user_choice_data = read_user_choices(user_choice_file)
     image_list = load_images(image_folder)

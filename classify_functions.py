@@ -69,6 +69,30 @@ def single_call(model_name, input_prompt, image_path, input_temperature):
     return model_response, time_taken
 
 
+def vlm_call(model_name, all_messages, input_prompt, image_path):
+    """
+    same as single_call, but with a list of messages for sequential calls
+    new message is all_messages[-1]['content']
+    """
+    new_message = {'role': 'user', 'content': input_prompt}
+    if image_path: new_message['image'] = image_path
+    all_messages.append(new_message)
+    
+    response = ollama.chat(
+        model=model_name,
+        messages=all_messages,
+        stream=False,
+        options={'temperature': 0}
+    )
+    
+    assistant_message = {
+        'role': response['message']['role'],
+        'content': response['message']['content']
+    }
+    all_messages.append(assistant_message)
+    return all_messages
+
+
 def classify_response(response, categories):
     """
     Classify the response into one of the classes by counting the occurences of specific words
@@ -81,8 +105,7 @@ def classify_response(response, categories):
                 classif_counts[cat] += 1
     max_classes = [k for k, v in classif_counts.items() if v == max(classif_counts.values())]
     classif = max_classes[0] if len(max_classes) == 1 else "Unclear/Nothing"
-    return classif
-    # return list(categories.keys()).index(classif) + 1
+    return list(categories.keys()).index(classif) + 1
 
 
 
@@ -107,12 +130,8 @@ def process_images(image_list, models, input_prompt, image_folder, csv_rows, cat
     
     Converts numeric user choices to category names for proper comparison
     """
-    # Get a mapping of numeric choices to category names (if needed)
-    category_names = list(categories.keys())
-    header_length = 3 # image_name, description, user_choice
+    len_header = 3 # image_name, description, user_choice
     data_per_model = 3 # classif, response, time
-    
-    error_data = {model['name']: 0 for model in models} # error tracking
     
     for model in models:
         model_name = model['name']
@@ -125,21 +144,17 @@ def process_images(image_list, models, input_prompt, image_folder, csv_rows, cat
             # Classify the response
             classif = classify_response(model_response.lower(), categories)
 
-            # Calculate error (1 if mismatch, 0 if match)
-            user_choice = csv_rows[image_name][2]
-            error = 1 if classif != user_choice else 0
-            error_data[model_name] += error
+            user_choice = int(csv_rows[image_name][2])
 
             # Print response with color coding
             print_response(model_name, image_name, classif, model_response, time_taken, user_choice, i, csv_rows[image_name][1], len(image_list), categories)
 
             # Update CSV rows
-            if len(csv_rows[image_name]) == header_length: # (image_name, description, user_choice)
+            if len(csv_rows[image_name]) == len_header: # (image_name, description, user_choice)
                 for _ in range(len(models) * data_per_model): # space for model data
                     csv_rows[image_name].append("")
             
-            model_idx = models.index(model)
-            base_idx = header_length + (model_idx * data_per_model)
+            base_idx = len_header + (models.index(model) * data_per_model)
             csv_rows[image_name][base_idx] = classif
             csv_rows[image_name][base_idx + 1] = model_response
             csv_rows[image_name][base_idx + 2] = round(time_taken, 3)
