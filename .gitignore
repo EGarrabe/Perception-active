@@ -1,9 +1,11 @@
 dataset_vlm
 dataset_vlm_mini
 dataset_vlm_short
-dataset_table
+dataset_vlm_table
 res
 classification_plot.png
 user_choice_mini.csv
 user_choice_short.csv
 __pycache__
+dataset_vlm_crop
+results_arm.csv

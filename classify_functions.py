@@ -30,18 +30,20 @@ def load_images(image_folder):
     return image_list
 
 
-def init_csv(image_list, user_choice_data):
+def init_csv(image_list, user_choice_data, categories):
     """
     Initialize the CSV data with image info
+    Format:
+    image, description, user_choice, model1_classif, model1_response, model1_time, model2_classif, model2_response, model2_time, ...
     """
     csv_rows = {}
     for image_name in image_list:
-        uc_info = user_choice_data.get(image_name, {"description": "N/A", "user_choice": "4"}) # default '4' if missing
+        uc_info = user_choice_data.get(image_name, {"description": "N/A", "user_choice": "Unclear/Nothing"})
         description = uc_info["description"]
         user_choice = uc_info["user_choice"]
-
         csv_rows[image_name] = [image_name, description, user_choice]
-    return csv_rows, description, user_choice
+    print("init_csv  csv_rows = ", csv_rows)
+    return csv_rows
 
 
 def single_call(model_name, input_prompt, image_path, input_temperature):
@@ -80,7 +82,7 @@ def classify_response(response, categories):
     max_classes = [k for k, v in classif_counts.items() if v == max(classif_counts.values())]
     classif = max_classes[0] if len(max_classes) == 1 else "Unclear/Nothing"
     return classif
-
+    # return list(categories.keys()).index(classif) + 1
 
 
 
@@ -98,7 +100,7 @@ def print_response(model_name, image_name, classif, model_response, time_taken, 
     print(colored_response)
 
 
-def process_images(image_list, models, user_choice_data, input_prompt, image_folder, csv_rows, user_choice, description, categories):
+def process_images(image_list, models, input_prompt, image_folder, csv_rows, categories):
     """
     Main loop to process images with models
     Returns classification data and error data
@@ -107,8 +109,9 @@ def process_images(image_list, models, user_choice_data, input_prompt, image_fol
     """
     # Get a mapping of numeric choices to category names (if needed)
     category_names = list(categories.keys())
+    header_length = 3 # image_name, description, user_choice
+    data_per_model = 3 # classif, response, time
     
-    classification_data = {model['name']: [] for model in models}
     error_data = {model['name']: 0 for model in models} # error tracking
     
     for model in models:
@@ -121,41 +124,27 @@ def process_images(image_list, models, user_choice_data, input_prompt, image_fol
 
             # Classify the response
             classif = classify_response(model_response.lower(), categories)
-            classification_data[model_name].append((image_name, classif)) # for plot
 
-            # Get user choice (might be numeric or string)
-            user_choice_raw = user_choice_data.get(image_name, {}).get("user_choice", "Unclear/Nothing")
-            description = user_choice_data.get(image_name, {}).get("description", "N/A")
-            
-            # Convert numeric user choice to category name if necessary
-            if user_choice_raw.isdigit() and int(user_choice_raw) <= len(category_names):
-                idx = int(user_choice_raw) - 1  # Convert from 1-based to 0-based index
-                if 0 <= idx < len(category_names):
-                    user_choice = category_names[idx]
-                else:
-                    user_choice = "Unclear/Nothing"
-            else:
-                # If already a category name or invalid, use as is
-                user_choice = user_choice_raw
-            
             # Calculate error (1 if mismatch, 0 if match)
+            user_choice = csv_rows[image_name][2]
             error = 1 if classif != user_choice else 0
             error_data[model_name] += error
 
             # Print response with color coding
-            print_response(model_name, image_name, classif, model_response, time_taken, user_choice, i, description, len(image_list), categories)
+            print_response(model_name, image_name, classif, model_response, time_taken, user_choice, i, csv_rows[image_name][1], len(image_list), categories)
 
             # Update CSV rows
-            if len(csv_rows[image_name]) == 3:  # (image_name, description, user_choice)
-                for _ in range(len(models) * 3):  # space for model data
+            if len(csv_rows[image_name]) == header_length: # (image_name, description, user_choice)
+                for _ in range(len(models) * data_per_model): # space for model data
                     csv_rows[image_name].append("")
             
             model_idx = models.index(model)
-            base_idx = 3 + (model_idx * 3)
+            base_idx = header_length + (model_idx * data_per_model)
             csv_rows[image_name][base_idx] = classif
             csv_rows[image_name][base_idx + 1] = model_response
             csv_rows[image_name][base_idx + 2] = round(time_taken, 3)
             
+    print("process_images  csv_rows :", csv_rows)
     return csv_rows
 
 
