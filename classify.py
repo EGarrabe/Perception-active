@@ -11,7 +11,7 @@ def main():
     # Uncomment the models to use.
     # You need about 1.2x of vram+ram of the model size (GB) to be able to run it.
     models = [
-        # {"name": "granite3.2-vision", "temperature":0}, # 2B (2.3GB)
+        {"name": "granite3.2-vision", "temperature":0}, # 2B (2.3GB)
         # {"name": "gemma3", "temperature": 0}, # 4B (3.3GB)
         {"name": "llava", "temperature": 0}, # 7B (4.7GB)
         # {"name": "llava-llama3", "temperature": 0}, # 8B (5.5GB)

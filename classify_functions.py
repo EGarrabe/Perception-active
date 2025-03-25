@@ -42,7 +42,6 @@ def init_csv(image_list, user_choice_data, categories):
         description = uc_info["description"]
         user_choice = uc_info["user_choice"]
         csv_rows[image_name] = [image_name, description, user_choice]
-    print("init_csv  csv_rows = ", csv_rows)
     return csv_rows
 
 
@@ -78,19 +77,21 @@ def vlm_call(model_name, all_messages, input_prompt, image_path):
     if image_path: new_message['image'] = image_path
     all_messages.append(new_message)
     
+    start_time = time.time()
     response = ollama.chat(
         model=model_name,
         messages=all_messages,
         stream=False,
         options={'temperature': 0}
     )
+    time_taken = time.time() - start_time
     
     assistant_message = {
         'role': response['message']['role'],
         'content': response['message']['content']
     }
     all_messages.append(assistant_message)
-    return all_messages
+    return all_messages, time_taken
 
 
 def classify_response(response, categories):
@@ -123,6 +124,39 @@ def print_response(model_name, image_name, classif, model_response, time_taken, 
     print(colored_response)
 
 
+def update_csv_rows(csv_rows, image_name, model_number, classif, model_response, time_taken, model_count):
+    """
+    Update the CSV rows with the classification data
+    """
+    len_header = 3 # image_name, description, user_choice
+    data_per_model = 3 # classif, response, time
+    if len(csv_rows[image_name]) == len_header: # (image_name, description, user_choice)
+        for _ in range(model_count * data_per_model): # space for model data
+            csv_rows[image_name].append("")
+    
+    base_idx = len_header + (model_number * data_per_model)
+    csv_rows[image_name][base_idx:base_idx + 3] = [classif, model_response, round(time_taken, 3)] # add (classif, response, time)
+    return csv_rows
+
+def update_csv_rows_multi(csv_rows, image_name, model_number, classif, model_response, time_taken, model_count, i):
+    """
+    Update the CSV rows with the classification data
+    """
+    len_header = 3 # image_name, description, user_choice
+    data_per_model = 6 # classif, response, time
+    if len(csv_rows[image_name]) == len_header: # (image_name, description, user_choice)
+        for _ in range(model_count * data_per_model): # space for model data
+            csv_rows[image_name].append("")
+    
+    base_idx = len_header + (model_number * data_per_model)
+    if i == 0:
+        csv_rows[image_name][base_idx:base_idx + 6] = [classif, model_response, round(time_taken, 3), "", "", ""] # add (classif, response, time)
+    else:
+        csv_rows[image_name][base_idx + 3:base_idx + 6] = [classif, model_response, round(time_taken, 3)]
+    
+    return csv_rows
+
+
 def process_images(image_list, models, input_prompt, image_folder, csv_rows, categories):
     """
     Main loop to process images with models
@@ -130,9 +164,6 @@ def process_images(image_list, models, input_prompt, image_folder, csv_rows, cat
     
     Converts numeric user choices to category names for proper comparison
     """
-    len_header = 3 # image_name, description, user_choice
-    data_per_model = 3 # classif, response, time
-    
     for model in models:
         model_name = model['name']
         print(f"\n=== Processing with Model: {model_name} ===")
@@ -143,25 +174,50 @@ def process_images(image_list, models, input_prompt, image_folder, csv_rows, cat
 
             # Classify the response
             classif = classify_response(model_response.lower(), categories)
-
-            user_choice = int(csv_rows[image_name][2])
-
+            
             # Print response with color coding
+            user_choice = int(csv_rows[image_name][2])
             print_response(model_name, image_name, classif, model_response, time_taken, user_choice, i, csv_rows[image_name][1], len(image_list), categories)
-
+            
             # Update CSV rows
-            if len(csv_rows[image_name]) == len_header: # (image_name, description, user_choice)
-                for _ in range(len(models) * data_per_model): # space for model data
-                    csv_rows[image_name].append("")
+            csv_rows = update_csv_rows(csv_rows, image_name, models.index(model), classif, model_response, time_taken, len(models))
             
-            base_idx = len_header + (models.index(model) * data_per_model)
-            csv_rows[image_name][base_idx] = classif
-            csv_rows[image_name][base_idx + 1] = model_response
-            csv_rows[image_name][base_idx + 2] = round(time_taken, 3)
-            
-    print("process_images  csv_rows :", csv_rows)
     return csv_rows
 
+def process_image_multi(image_list, models, input_prompts, image_folders, csv_rows, categories):
+    """
+    Main loop to process images with models
+    Returns classification data and error data
+    
+    Converts numeric user choices to category names for proper comparison
+    """
+    for model in models:
+        model_name = model['name']
+        print(f"\n=== Processing with Model: {model_name} ===")
+        
+        # Try with the first prompt, if classification is wrong, try with the second prompt and image
+        for i, image_name in enumerate(image_list):
+            all_messages = []
+            for j, input_prompt in enumerate(input_prompts):
+                # Get the image path and call the model
+                all_messages, time_taken = vlm_call(model_name, all_messages, input_prompt, os.path.join(image_folders[j], image_name))
+                model_response = all_messages[-1]['content']
+                print(all_messages)
+
+                # Classify the response
+                classif = classify_response(model_response.lower(), categories)
+
+                # Print response with color coding
+                user_choice = int(csv_rows[image_name][2])
+                print_response(model_name, image_name, classif, model_response, time_taken, user_choice, i, csv_rows[image_name][1], len(image_list), categories)
+
+                # Update CSV rows
+                csv_rows = update_csv_rows_multi(csv_rows, image_name, models.index(model), classif, model_response, time_taken, len(models), j)
+
+                if classif == user_choice:
+                    break
+    return csv_rows
+    
 
 def save_csv(csv_file, csv_rows, image_list, models):
     """
@@ -177,6 +233,7 @@ def save_csv(csv_file, csv_rows, image_list, models):
 
         for image_name in image_list:
             writer.writerow(csv_rows[image_name])
+
 
 def load_csv(csv_file, categories):
     """
