@@ -68,32 +68,6 @@ def single_call(model_name, input_prompt, image_path, input_temperature):
     return model_response, time_taken
 
 
-def vlm_call(model_name, all_messages, input_prompt, image_path):
-    """
-    same as single_call, but with a list of messages for sequential calls
-    new message is all_messages[-1]['content']
-    """
-    new_message = {'role': 'user', 'content': input_prompt}
-    if image_path: new_message['image'] = image_path
-    all_messages.append(new_message)
-    
-    start_time = time.time()
-    response = ollama.chat(
-        model=model_name,
-        messages=all_messages,
-        stream=False,
-        options={'temperature': 0}
-    )
-    time_taken = time.time() - start_time
-    
-    assistant_message = {
-        'role': response['message']['role'],
-        'content': response['message']['content']
-    }
-    all_messages.append(assistant_message)
-    return all_messages, time_taken
-
-
 def classify_response(response, categories):
     """
     Classify the response into one of the classes by counting the occurences of specific words
@@ -114,13 +88,13 @@ def print_response(model_name, image_name, classif, model_response, time_taken, 
     """
     Prints the log of the response with color coding
     """
-    classif_color = f"\033[92m{classif}\033[37m" if classif == user_choice else f"\033[91m{classif}\033[37m"
+    color_classif = f"\033[92m{classif}\033[37m" if classif == user_choice else f"\033[91m{classif}\033[37m"
     colored_response = model_response
     for cat, words in categories.items():
         for word in words:
             colored_response = re.sub(rf'\b{word}\b', f"\033[1;33m{word}\033[0m", colored_response)
 
-    print(f"\n\033[1;34m[{model_name}] \033[37m[{i+1}/{image_count}] {image_name} : Class {classif_color} ({user_choice}) ({time_taken:.2f}s) ({description})\033[0m")
+    print(f"\n\033[1;34m[{model_name}] \033[37m[{i+1}/{image_count}] {image_name} : Class {color_classif} ({user_choice}) ({time_taken:.2f}s) ({description})\033[0m")
     print(colored_response)
 
 
@@ -136,24 +110,6 @@ def update_csv_rows(csv_rows, image_name, model_number, classif, model_response,
     
     base_idx = len_header + (model_number * data_per_model)
     csv_rows[image_name][base_idx:base_idx + 3] = [classif, model_response, round(time_taken, 3)] # add (classif, response, time)
-    return csv_rows
-
-def update_csv_rows_multi(csv_rows, image_name, model_number, classif, model_response, time_taken, model_count, i):
-    """
-    Update the CSV rows with the classification data
-    """
-    len_header = 3 # image_name, description, user_choice
-    data_per_model = 6 # classif, response, time
-    if len(csv_rows[image_name]) == len_header: # (image_name, description, user_choice)
-        for _ in range(model_count * data_per_model): # space for model data
-            csv_rows[image_name].append("")
-    
-    base_idx = len_header + (model_number * data_per_model)
-    if i == 0:
-        csv_rows[image_name][base_idx:base_idx + 6] = [classif, model_response, round(time_taken, 3), "", "", ""] # add (classif, response, time)
-    else:
-        csv_rows[image_name][base_idx + 3:base_idx + 6] = [classif, model_response, round(time_taken, 3)]
-    
     return csv_rows
 
 
@@ -176,48 +132,14 @@ def process_images(image_list, models, input_prompt, image_folder, csv_rows, cat
             classif = classify_response(model_response.lower(), categories)
             
             # Print response with color coding
-            user_choice = int(csv_rows[image_name][2])
-            print_response(model_name, image_name, classif, model_response, time_taken, user_choice, i, csv_rows[image_name][1], len(image_list), categories)
+            description, user_choice = csv_rows[image_name][1], int(csv_rows[image_name][2])
+            print_response(model_name, image_name, classif, model_response, time_taken, user_choice, i, description, len(image_list), categories)
             
             # Update CSV rows
             csv_rows = update_csv_rows(csv_rows, image_name, models.index(model), classif, model_response, time_taken, len(models))
             
     return csv_rows
 
-def process_image_multi(image_list, models, input_prompts, image_folders, csv_rows, categories):
-    """
-    Main loop to process images with models
-    Returns classification data and error data
-    
-    Converts numeric user choices to category names for proper comparison
-    """
-    for model in models:
-        model_name = model['name']
-        print(f"\n=== Processing with Model: {model_name} ===")
-        
-        # Try with the first prompt, if classification is wrong, try with the second prompt and image
-        for i, image_name in enumerate(image_list):
-            all_messages = []
-            for j, input_prompt in enumerate(input_prompts):
-                # Get the image path and call the model
-                all_messages, time_taken = vlm_call(model_name, all_messages, input_prompt, os.path.join(image_folders[j], image_name))
-                model_response = all_messages[-1]['content']
-                print(all_messages)
-
-                # Classify the response
-                classif = classify_response(model_response.lower(), categories)
-
-                # Print response with color coding
-                user_choice = int(csv_rows[image_name][2])
-                print_response(model_name, image_name, classif, model_response, time_taken, user_choice, i, csv_rows[image_name][1], len(image_list), categories)
-
-                # Update CSV rows
-                csv_rows = update_csv_rows_multi(csv_rows, image_name, models.index(model), classif, model_response, time_taken, len(models), j)
-
-                if classif == user_choice:
-                    break
-    return csv_rows
-    
 
 def save_csv(csv_file, csv_rows, image_list, models):
     """
@@ -255,7 +177,7 @@ def load_csv(csv_file, categories):
                 model_names.append(model_name)
                 model_indices[model_name] = i
                 model_time_indices[model_name] = i + 2
-
+    
     image_list = []
     csv_rows = {}
     user_choice_list = []
@@ -270,47 +192,23 @@ def load_csv(csv_file, categories):
         description = row[1]
         user_choice_raw = row[2]
 
-        if user_choice_raw.isdigit() and int(user_choice_raw) <= len(category_names):
-            idx = int(user_choice_raw) - 1
-            if 0 <= idx < len(category_names):
-                user_choice = category_names[idx]
-            else:
-                user_choice = "Unclear/Nothing"
-        else:
-            user_choice = user_choice_raw
+        user_choice = category_names[int(user_choice_raw) - 1]
 
         image_list.append(image_name)
         csv_rows[image_name] = row
         user_choice_list.append((image_name, user_choice))
 
         for model_name in model_names:
-            idx = model_indices[model_name]
-            time_idx = model_time_indices[model_name]
+            model_classif = category_names[int(row[model_indices[model_name]]) - 1]
 
-            if idx < len(row):
-                model_classif_raw = row[idx]
-
-                if model_classif_raw.isdigit() and int(model_classif_raw) <= len(category_names):
-                    model_idx = int(model_classif_raw) - 1
-                    if 0 <= model_idx < len(category_names):
-                        model_classif = category_names[model_idx]
-                    else:
-                        model_classif = model_classif_raw
-                else:
-                    model_classif = model_classif_raw
-
-                classification_data[model_name].append((image_name, model_classif))
-                error = 1 if model_classif != user_choice else 0
-                error_data[model_name] += error
-
-                if time_idx < len(row) and row[time_idx]:
-                    try:
-                        time_data[model_name].append(float(row[time_idx]))
-                    except ValueError:
-                        pass
+            classification_data[model_name].append((image_name, model_classif))
+            error = 1 if model_classif != user_choice else 0
+            error_data[model_name] += error
+            time_data[model_name].append(float(row[model_time_indices[model_name]]))
 
     avg_time_data = {model: sum(times) / len(times) if len(times) > 0 else 0 for model, times in time_data.items()}
     return image_list, csv_rows, user_choice_list, classification_data, error_data, avg_time_data, category_names, model_names
+
 
 def plot_results(categories, image_folder, csv_file, output_plot):
     """
@@ -359,7 +257,7 @@ def plot_results(categories, image_folder, csv_file, output_plot):
     # labels and Title
     x_labels = [f"{csv_rows[image][1]} ({i+1})" for i, image in enumerate(image_list)]
     ax.set_xticks(range(len(image_list)))
-    ax.set_xticklabels(x_labels, rotation=30, ha='right')
+    ax.set_xticklabels(x_labels, rotation=45, ha='right')
     ax.set_yticks(range(len(category_names)))
     ax.set_yticklabels(category_names)
     ax.set_xlabel('Image Index and Description')
