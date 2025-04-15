@@ -1,0 +1,36 @@
+scripts :
+- main.py : test a list of prompts on a list of models on a list of models
+	- prompts to use stored in ressources/all_prompts.txt
+	- adds the model responses to output/responses.csv
+	- adds the number of images correctly identified per model/prompt to output/accuracy.py
+	- adds the csv of each image (per prompt/model) to output/image_matrices
+	- IMPORTANT : if you want to reset things you need to delete the contents of output/
+- csv_to_image.py : transforms the outputted csv from main.py into pngs for easier visualization
+- transform_images.py : used to create other variants of images like occluded, blurred, overexposure... TODO: not finished
+- create_prompts_from_csv : used to generate a LOT of combinations of prompt based on parts of a prompt and what options each part has. UNUSED
+
+- base results :
+these are the results currently present in output/ at the time of writing this, I have tested the following 11 prompts :
+- What is the object in the image? Answer with a single word.
+- What is the object in the image? Ignore the robot arm, focus on the object, Answer with a single word.
+- You are a robot. Based on what you see, you must identify the object. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.
+- Based on what you see, you must identify the object. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.
+- You must identify the object. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.
+- Ignore the robotic arm. Focus only on the object being held. Identify it.
+- You are analyzing this image to detect the item held. Disregard the arm or background clutter.
+- Your task is to classify the item. Do not describe the robot or background.
+- Identify the item in the image
+- You are a warehouse robot sorting objects. What are you holding?
+- Act as a robotic assistant that identifies tools. What is in your grip?
+
+on the models :
+- llava
+- llava:13b
+- llava:34b
+- llava-llama3
+- llama3.2-vision
+- gemma3:4b
+- gemma3:12b
+- gemma3:27b
+
+on all 60 images from ressources/images_base

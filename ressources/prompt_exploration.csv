@@ -1,0 +1,3 @@
+WHO	IMAGE	GOAL	GOAL	IGNORE	FORMAT
+you are a robot, 	based on what you see, 	you must identify the object	 in the image. 	You will see a robotic arm in the image, but IGNORE IT, focus on the object. 	Be concise, identify the object.
+(none)	(none)	identify the object	. 	You may see a robotic arm in the image, but IGNORE IT, focus on the object. 	(none)
