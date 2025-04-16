@@ -1,16 +1,42 @@
-scripts :
+--------------------------------------------
+SCRIPTS
+--------------------------------------------
+
 - main.py : test a list of prompts on a list of models on a list of models
 	- prompts to use stored in ressources/all_prompts.txt
 	- adds the model responses to output/responses.csv
-	- adds the number of images correctly identified per model/prompt to output/accuracy.py
-	- adds the csv of each image (per prompt/model) to output/image_matrices
-	- IMPORTANT : if you want to reset things you need to delete the contents of output/
-- csv_to_image.py : transforms the outputted csv from main.py into pngs for easier visualization
+
+- create_CSVs_from_responses.py : creates the following CSVs using output/responses.csv
+	- a csv with the accuracy matrix (output/accuracy_matrix.csv) :
+		- rows : prompts
+		- columns : models
+		- contents : the number of correctly guessed images for the corresponding prompt/model couple
+	- for each image a csv with the accuracy matrix (output/image_matrices/) :
+		- rows : prompts
+		- columns : models
+		- contents : true if the corresponding prompt/model couple guessed the correct object, false otherwise
+	- for each model a csv with the accuracy matrix (output/model_matrices/) :
+		- rows : prompts
+		- columns : images
+		- contents : true if the corresponding prompt/image couple guessed the correct object, false otherwise
+	- for each prompt a csv with the accuracy matrix (output/prompt_matrices/) :
+		- rows : models
+		- columns : images
+		- contents : true if the corresponding model/image couple guessed the correct object, false otherwise
+
+- csv_to_image.py : transforms the outputted CSVs from create_CSVs_from_responses.py into PNGs for easier visualization.
+
 - transform_images.py : used to create other variants of images like occluded, blurred, overexposure... TODO: not finished
+
 - create_prompts_from_csv : used to generate a LOT of combinations of prompt based on parts of a prompt and what options each part has. UNUSED
 
-- base results :
-these are the results currently present in output/ at the time of writing this, I have tested the following 11 prompts :
+IMPORTANT : if you want to reset everything you need to delete the contents of output/
+
+
+--------------------------------------------
+RESULTS
+--------------------------------------------
+these are the results currently present in output/ at the time of writing this, I have tested the following 20 prompts :
 - What is the object in the image? Answer with a single word.
 - What is the object in the image? Ignore the robot arm, focus on the object, Answer with a single word.
 - You are a robot. Based on what you see, you must identify the object. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.
@@ -22,6 +48,15 @@ these are the results currently present in output/ at the time of writing this, 
 - Identify the item in the image
 - You are a warehouse robot sorting objects. What are you holding?
 - Act as a robotic assistant that identifies tools. What is in your grip?
+- You are a robot. Based on what you see, you must identify the object. Be concise, identify the object.
+- Based on what you see, you must identify the object. Be concise, identify the object.
+- You are a robot. You are analyzing this image to detect the item held. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.
+- Act as a robotic assistant that identifies tools. Based on what you see, you must identify the object gripped in your robotic arm. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.
+- You are analyzing this image to detect the item held. Based on what you see, you must identify the object gripped in your robotic arm. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.
+- You are a robot. Based on what you see, you must identify the object gripped in your robotic arm. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.
+- You are a robot. You are analyzing this image to detect the item held. Based on what you see, you must identify the object gripped in your robotic arm. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.
+- You are a robot. You are analyzing this image to detect the item held. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.
+- You are a robot. Based on what you see, you must identify the object gripped in your robotic arm. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.
 
 on the models :
 - llava
@@ -34,3 +69,9 @@ on the models :
 - gemma3:27b
 
 on all 60 images from ressources/images_base
+
+These results are also stored in output_archives/output_20_prompts in case you delete them from output/ for testing the code/
+
+There are also the results for just the best 7 prompts in output_archives/output_best_prompts
+
+The file prompt_exploration.odt contains the analysis of the results, it is not finished yet

@@ -10,8 +10,8 @@ def csv_to_image(csv_path, output_folder="output/csv_images", dpi=2000):
     
     filename = os.path.basename(csv_path)
     image_name = filename.split("_")[0] + ".jpg"
-    image_path = os.path.join("ressources/images_base/", image_name)
-    print(f"csv -> png : {image_path}")
+    image_path = os.path.join("ressources/images_base/", filename)
+    print(f"csv -> png : {filename}")
 
     # insert newlines on every 25 characters
     for col in df.columns:
@@ -69,13 +69,15 @@ def csv_to_image(csv_path, output_folder="output/csv_images", dpi=2000):
     plt.savefig(img_path, bbox_inches='tight')
     plt.close()
 
-def convert_all_csvs_in_folder(folder_path):
+def convert_all_csvs_in_folder(folder_path, output_folder):
     for root, _, files in os.walk(folder_path):
         for file in files:
             if file.endswith(".csv"):
-                csv_to_image(os.path.join(root, file))
+                csv_to_image(os.path.join(root, file), output_folder)
 
 if __name__ == "__main__":
-    convert_all_csvs_in_folder("output/image_matrices")  # adjust to your CSV output folder
-    csv_to_image("output/accuracy.csv")
-    csv_to_image("output/responses.csv")
+    convert_all_csvs_in_folder("output/image_matrices", "output/image_pngs")
+    convert_all_csvs_in_folder("output/model_matrices", "output/model_pngs")
+    convert_all_csvs_in_folder("output/prompt_matrices", "output/prompt_pngs")
+    csv_to_image("output/accuracy_matrix.csv")
+    csv_to_image("output/responses.csv")    # will probably run out of memory and crash, but it will work if you have few responses saved in the csv
