@@ -140,8 +140,8 @@ for image_name in os.listdir(base_images_path):
 		transformed_image = apply_grayscale(image)
 		transformed_image.save(os.path.join(output_images_path, "grayscale/" + image_name))
 
-		transformed_image = apply_uncentered_crop(image, crop_fraction=0.7)
-		transformed_image.save(os.path.join(output_images_path, "uncentered_crop/" + image_name))
+		# transformed_image = apply_uncentered_crop(image, crop_fraction=0.7)
+		# transformed_image.save(os.path.join(output_images_path, "uncentered_crop/" + image_name))
 		# to do manually instead
 
 		transformed_image = apply_rotation(image, angle=45)
@@ -180,10 +180,10 @@ for image_name in os.listdir(base_images_path):
 		transformed_image = apply_occlusion(image, num_blocks=3, max_block_size=0.2)
 		transformed_image.save(os.path.join(output_images_path, "occluded/" + image_name))
 
-		transformed_image = apply_scale_variation(image, scale=0.3)
-		transformed_image.save(os.path.join(output_images_path, "small_scale/" + image_name))
+		# transformed_image = apply_scale_variation(image, scale=0.3)
+		# transformed_image.save(os.path.join(output_images_path, "small_scale/" + image_name))
 		# right now it's just a de zoom
 
-		transformed_image = apply_scale_variation(image, scale=2.5)
-		transformed_image.save(os.path.join(output_images_path, "big_scale/" + image_name))
+		# transformed_image = apply_scale_variation(image, scale=2.5)
+		# transformed_image.save(os.path.join(output_images_path, "big_scale/" + image_name))
 		# right now it's just a zoom
