@@ -19,9 +19,11 @@ load_ollama_models.py doit être présent.
 
 
 
-================
+
+==================
 2-suffix_probas.py
-================
+==================
+
 Crée un arbre de probabilité pour plusieurs modèles et plusieurs images après un préfix (caché).
 Crée un csv et un tableau final (image) indiquant des statistiques sur le suffix de la réponse donné par le VLM.
 
@@ -41,9 +43,26 @@ load_ollama_models.py doit être présent.
 =========================
 3-probs_to_classifier.py
 =========================
+
 Crée et entraîne un classifieur depuis un csv pour classifier les réponses de VLM en se basant sur les probabilités de la réponse (suffixe).
 Enregistre un fichier joblib réutilisable.
 
 Utilisation:
 CSV_FILE_PATH: fichier csv à utiliser. Il est compatible avec le csv output de 2-suffix_probas.py.
 TEST_SET_SIZE: proportion des réponses à utiliser pour le split test.
+
+
+
+
+===========================
+4-idenfify_with_confidence
+===========================
+
+Le script 2 et 3 combinés pour obtenir une réponse du VLM de son identification de l'objet dans l'image, ainsi que l'incertitude donnée par le classifieur.
+Attention, la classification peut-être fausse, même avec le seuil Zero False Positives.
+
+Utilisation:
+IMAGE_PATH: chemin de l'image du robot contenant l'image à identifier
+
+MODEL_NAME, MODEL_PATH, MMPROJ_PATH = modèle LLM utilisé, spécifier manuellement si ollama non installé.
+CLASSIFIER_MODEL_PATH = chemin du classifieur .joblib. Il doit être entraîné sur le même type d'image, les mêmes features et le même modèle pour obtenir une performance acceptable.
