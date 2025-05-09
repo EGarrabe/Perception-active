@@ -1,4 +1,8 @@
-Voici le code pour la partie Incertitude.
+--- Code pour la partie Incertitude ---
+(Auteur: Thomas Marchand)
+
+NOTE: les modèles LLM sont chargés avec une fonction dans load_ollama_models. Le code de cette partie fonctionne avec llava-v1.6, mais le ChatHandler n'est pas adapté pour d'autres modèles. Il est donc conseillé de rester sur llava 7b ou llava 13b.
+
 
 ====================================
 1-create_probability_tree_multi.py
