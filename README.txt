@@ -6,7 +6,7 @@ Voici le code pour la partie Incertitude.
 
 Crée un arbre de probabilité pour plusieurs modèles et plusieurs images.
 Enregistre des graphes et les réponses générés et les place dans un fichier temporaire (OUTPUT_BASE_DIR)
-Crée un csv et un tableau final (image) indiquant la probabilité d'avoir le mot correct ainsi que la masse de probabilité explorée pour chaque image et modèle.
+Crée un csv, des images d'arbres, un graphique montrant l'evolution du résultat, un fichier txt contenant les réponses et un tableau final (image) indiquant la probabilité d'avoir le mot correct ainsi que la masse de probabilité explorée pour chaque image et modèle.
 
 Utilisation:
 NUM_PATHS_TO_FIND : nombre de chemins à générer. 10 est une bonne valeur pour tester. Il est recommendé de donner la même taille à RANKS_K.
@@ -58,11 +58,14 @@ TEST_SET_SIZE: proportion des réponses à utiliser pour le split test.
 4-idenfify_with_confidence
 ===========================
 
-Le script 2 et 3 combinés pour obtenir une réponse du VLM de son identification de l'objet dans l'image, ainsi que l'incertitude donnée par le classifieur.
-Attention, la classification peut-être fausse, même avec le seuil Zero False Positives.
+Le script 2 et 3 combinés pour obtenir une réponse du VLM de son identification de l'objet depuis plusieurs images, ainsi que l'incertitude donnée par le classifieur.
+Elle simule le robot qui redemande des images jusqu'à ce qu'elle soit assez sure de son identification d'objet.
+(Attention, la classification peut-être fausse, même avec le seuil Zero False Positives.)
 
 Utilisation:
-IMAGE_PATH: chemin de l'image du robot contenant l'image à identifier
+IMAGE_DIR: chemin du fichier contenant les images
+IMAGE_NAMES: noms d'images à utiliser pour l'objet à identifier (pour simuler un robot prenant plusieurs images).
 
-MODEL_NAME, MODEL_PATH, MMPROJ_PATH = modèle LLM utilisé, spécifier manuellement si ollama non installé.
+MODEL_NAME, MODEL_PATH, MMPROJ_PATH = modèle LLM utilisé, spécifier manuellement des modèles .gguf si ollama non installé ou ne fonctionne pas (testé sous Windows 11)
+CONFIDENCE_TARGET_TYPE: type du seuil à utiliser pour définir la confiance nécessaire pour classifier comme "Sûr".
 CLASSIFIER_MODEL_PATH = chemin du classifieur .joblib. Il doit être entraîné sur le même type d'image, les mêmes features et le même modèle pour obtenir une performance acceptable.
