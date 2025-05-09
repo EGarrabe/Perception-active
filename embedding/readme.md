@@ -8,7 +8,8 @@ Cette partie contient des scripts et notebooks pour explorer les embeddings.
 - `PIL` : pour charger et afficher des images
 
 ## Fichiers requis
-- `responses_with_final_success.csv` : Ce fichier CSV contient les vecteurs déjà calculés, pour éviter la perte de temps, il faut le télécharger pour avoir accès aux données
+- `responses_with_final_success.csv` : Ce fichier CSV contient les vecteurs déjà calculés, pour éviter la perte de temps, il faut le télécharger pour avoir accès aux données.
+- **IMPORTANT**: Il est actuellement dans un archive compréssé `responses_with_final_success.7z`, pour éxécuter le code dessous, il faut d'abord le décompresser. 
 - `images` : Le dossier `images` contient des images qui sont utilisées dans les démonstrations
 
 ## Principales fonctionnalités
