@@ -1,0 +1,21 @@
+23_soap_bottle,gemma3:12b,gemma3:27b,gemma3:4b,llama3.2-vision,llava,llava-llama3,llava:13b,llava:34b
+"Act as a robotic assistant that identifies tools. Based on what you see, you must identify the object gripped in your robotic arm. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.",False,False,False,True,False,False,False,False
+Act as a robotic assistant that identifies tools. What is in your grip?,True,False,False,True,False,False,False,False
+"Based on what you see, you must identify the object. Be concise, identify the object.",False,False,False,True,False,False,False,False
+"Based on what you see, you must identify the object. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.",False,False,False,True,False,False,False,False
+Identify the item in the image,False,True,False,True,False,False,False,False
+Ignore the robotic arm. Focus only on the object being held. Identify it.,True,True,False,True,False,False,False,False
+What is the object in the image? Answer with a single word.,False,False,False,False,False,False,False,False
+"What is the object in the image? Ignore the robot arm, focus on the object, Answer with a single word.",False,False,False,False,False,False,False,False
+"You are a robot. Based on what you see, you must identify the object gripped in your robotic arm. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.",False,False,False,True,False,False,False,False
+"You are a robot. Based on what you see, you must identify the object gripped in your robotic arm. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.",False,False,False,True,False,False,False,False
+"You are a robot. Based on what you see, you must identify the object. Be concise, identify the object.",False,False,False,True,False,False,False,False
+"You are a robot. Based on what you see, you must identify the object. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.",False,False,False,True,False,False,False,False
+"You are a robot. You are analyzing this image to detect the item held. Based on what you see, you must identify the object gripped in your robotic arm. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.",False,False,False,True,False,False,False,False
+"You are a robot. You are analyzing this image to detect the item held. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.",False,False,False,True,False,False,False,False
+"You are a robot. You are analyzing this image to detect the item held. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.",False,False,False,True,False,False,False,False
+You are a warehouse robot sorting objects. What are you holding?,True,True,False,True,False,False,False,False
+"You are analyzing this image to detect the item held. Based on what you see, you must identify the object gripped in your robotic arm. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.",False,False,False,True,False,False,False,False
+You are analyzing this image to detect the item held. Disregard the arm or background clutter.,True,True,False,False,False,False,False,False
+"You must identify the object. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.",False,False,False,True,False,False,False,False
+Your task is to classify the item. Do not describe the robot or background.,False,False,False,True,False,False,False,False

@@ -1,0 +1,128 @@
+--------------------------------------------
+SCRIPTS
+--------------------------------------------
+
+# 1 : prompt exploration
+
+- main.py : test a list of prompts on a list of models on a list of images
+	- prompts to use stored in ressources/all_prompts.txt
+	- adds the model responses to output/responses.csv
+
+- create_CSVs_from_responses.py : creates the following CSVs using output/responses.csv
+	- a csv with the accuracy matrix (output/accuracy_matrix.csv) :
+		- rows : prompts
+		- columns : models
+		- contents : the number of correctly guessed images for the corresponding prompt/model couple
+	- for each image a csv with the accuracy matrix (output/image_matrices/) :
+		- rows : prompts
+		- columns : models
+		- contents : true if the corresponding prompt/model couple guessed the correct object, false otherwise
+	- for each model a csv with the accuracy matrix (output/model_matrices/) :
+		- rows : prompts
+		- columns : images
+		- contents : true if the corresponding prompt/image couple guessed the correct object, false otherwise
+	- for each prompt a csv with the accuracy matrix (output/prompt_matrices/) :
+		- rows : models
+		- columns : images
+		- contents : true if the corresponding model/image couple guessed the correct object, false otherwise
+
+- csv_to_image.py : transforms the outputted CSVs from create_CSVs_from_responses.py into PNGs for easier visualization.
+
+# 2 : image transformations
+
+- transform_images.py : used to create other variants of images like occluded, blurred, overexposure... TODO: not finished
+
+- main_2.py : test a prompt on a list of models and a list of image folders (the various transformations like blurred, over-exposed...)
+	- adds the model responses to output/responses_2.csv
+
+- create_CSVs_from_responses_2.py : creates the following CSVs using output/responses_2.csv
+	- a csv with the accuracy matrix (output/accuracy_matrix_2.csv) :
+		- rows : transformations
+		- columns : models
+		- contents : the number of correctly guessed images for the corresponding transformation/model couple
+	- for each image a csv with the accuracy matrix (output/image_matrices_2/) :
+		- rows : transformations
+		- columns : models
+		- contents : true if the corresponding transformation/model couple guessed the correct object, false otherwise
+	- for each model a csv with the accuracy matrix (output/model_matrices_2/) :
+		- rows : transformations
+		- columns : images
+		- contents : true if the corresponding transformation/image couple guessed the correct object, false otherwise
+	- for each transformation a csv with the accuracy matrix (output/transformation_matrices_2/) :
+		- rows : models
+		- columns : images
+		- contents : true if the corresponding model/image couple guessed the correct object, false otherwise
+
+- csv_to_image_2.py : transforms the outputted CSVs from create_CSVs_from_responses_2.py into PNGs for easier visualization.
+
+IMPORTANT : if you want to reset everything you need to delete the contents of output/
+
+
+--------------------------------------------
+RESULTS
+--------------------------------------------
+these are the results currently present in output/ at the time of writing this, I have tested the following 20 prompts :
+- What is the object in the image? Answer with a single word.
+- What is the object in the image? Ignore the robot arm, focus on the object, Answer with a single word.
+- You are a robot. Based on what you see, you must identify the object. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.
+- Based on what you see, you must identify the object. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.
+- You must identify the object. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.
+- Ignore the robotic arm. Focus only on the object being held. Identify it.
+- You are analyzing this image to detect the item held. Disregard the arm or background clutter.
+- Your task is to classify the item. Do not describe the robot or background.
+- Identify the item in the image
+- You are a warehouse robot sorting objects. What are you holding?
+- Act as a robotic assistant that identifies tools. What is in your grip?
+- You are a robot. Based on what you see, you must identify the object. Be concise, identify the object.
+- Based on what you see, you must identify the object. Be concise, identify the object.
+- You are a robot. You are analyzing this image to detect the item held. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.
+- Act as a robotic assistant that identifies tools. Based on what you see, you must identify the object gripped in your robotic arm. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.
+- You are analyzing this image to detect the item held. Based on what you see, you must identify the object gripped in your robotic arm. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.
+- You are a robot. Based on what you see, you must identify the object gripped in your robotic arm. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.
+- You are a robot. You are analyzing this image to detect the item held. Based on what you see, you must identify the object gripped in your robotic arm. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.
+- You are a robot. You are analyzing this image to detect the item held. Disregard the arm and background clutter, focus on the object. Be concise, identify the object.
+- You are a robot. Based on what you see, you must identify the object gripped in your robotic arm. You will see a robotic arm in the image, but IGNORE IT, focus on the object. Be concise, identify the object.
+
+on the models :
+- llava
+- llava:13b
+- llava:34b
+- llava-llama3
+- llama3.2-vision
+- gemma3:4b
+- gemma3:12b
+- gemma3:27b
+
+on all 60 images from ressources/images_base
+
+These results are also stored in output_archives/output_20_prompts in case you delete them from output/ for testing the code/
+
+There are also the results for just the best 7 prompts in output_archives/output_best_prompts
+
+The file prompt_exploration.odt contains the analysis of the results
+
+For the transformations, there are 17 different transformations, some are done manually but most are done automatically with transform_images.py. Here is the list of them :
+
+- normal (ressources/images_base) : images de base testées jusqu’à maintenant
+- haute qualité (ressources/high_quality) : images avec la meilleur résolution possible (images capturées par le téléphone avant de faire les réductions initiales)
+- bon rognage (ressources/good_crop) : images rognées manuellement pour contenir le moins possible d’éléments autres que l’objet
+- rognage coupant (cut_object_crop) : images rognées manuellement pour l’image ne contienne que une partie de l’objet, l’objet n’est également pas centré dans l’image
+- flou (ressources/blurred) : images floutées
+- compression (ressources/jpeg_artifacts) : images enregistrées avec un fort taux de compression
+- bruit impulsionnel (ressources/salt_pepper_noise) : images avec du bruit impulsionnel
+- retournement horizontal (ressources/flipped_horizontal) : images retournées horizontalement (effet miroir gauche-droite)
+- retournement vertical (ressources/flipped_vertical) : images retournées verticalement (effet miroir haut-bas)
+- rotation (ressources/rotated) : images pivotées d’un certain angle (45 degrés).
+- niveaux de gris (ressources/grayscale) : images converties en noir et blanc
+- teinte bleue (ressources/tint_blue) : images avec une dominante bleue ajoutée artificiellement
+- teinte verte (ressources/tint_green) : images avec une dominante verte ajoutée artificiellement
+- teinte rouge (ressources/tint_red) : images avec une dominante rouge ajoutée artificiellement
+- surexposition (ressources/overexposed) : images artificiellement éclaircies pour simuler une exposition trop forte
+- sous-exposition (ressources/underexposed) : images artificiellement assombries pour simuler un manque de lumière
+- occlusion partielle (ressources/occluded) : images où des parties de l’objet sont recouvertes par des rectangles noirs simulant des obstructions (3 rectangles aléatoires). Notes : il aurait été mieux de créer les rectangles manuellement pour chaque images car les positions générées aléatoirement sont parfois très petites et dans des zones peu gênantes. D’autant plus que nos images ont déjà des rectangles noirs sur la table par défaut que on ne pouvait pas enlever.
+
+All images generated are available in ressources/ in the corresponding folders.
+
+These results are also stored in output_archives/output_transformations
+
+The interpretations are also available in prompt_exploration.odt
